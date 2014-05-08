@@ -14,15 +14,8 @@ import com.sgu.tetris3d.game.Color;
 import com.sgu.tetris3d.game.math.Matrix4f;
 import com.sgu.tetris3d.game.math.Vector3f;
 
-
-/**
- * Game's OpenGL renderer
- *
- */
 public class GLRenderer {
-
 	// Quad variables
-	// private int quadVAO = 0;
 	private int quadVertexVBO = 0;
 	private int quadIndicesVBO = 0;
 	private int quadIndicesCount = 0;
@@ -53,11 +46,6 @@ public class GLRenderer {
 
 	private FloatBuffer matrix44Buffer = null;
 	
-	/**
-	 * Performs initial setup of OpenGL renderer
-	 * @param width Width of created frame buffer
-	 * @param height Height of created frame buffer
-	 */
 	public void setup()
 	{
 		this.setupOpenGL();
@@ -66,26 +54,12 @@ public class GLRenderer {
 		this.setupShaders();
 		this.setupMatrices();
 	}
-	
-	/**
-	 * Performs the tear down of renderer, removing all OpenGL dependencies
-	 */
-	public void tearDown()
-	{
-		this.destroyOpenGL();
-	}
 
-	/**
-	 * Setups OpenGL to begin rendering current frame
-	 * @param camera Camera used to render current frame
-	 */
 	public void startRenderingWithCamera(Camera camera)
 	{
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 		GL20.glUseProgram(quadProgram);
 		
-		// Bind to the VAO that has all the information about the vertices
-		// GL30.glBindVertexArray(quadVAO);
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, quadVertexVBO);
 		GL20.glVertexAttribPointer(kPosAttrib, VertexData.positionElementCount, GL11.GL_FLOAT, 
 				false, VertexData.stride, VertexData.positionByteOffset);
@@ -105,45 +79,30 @@ public class GLRenderer {
 		GL20.glUniformMatrix4(viewMatrixLocation, false, matrix44Buffer);
 	}
 	
-	/**
-	 * Cleans OpenGL's state at the end of rendering frame
-	 */
 	public void endRendering()
 	{
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
 		GL20.glDisableVertexAttribArray(kPosAttrib);
 		GL20.glDisableVertexAttribArray(kNormAttrib);
-		// GL30.glBindVertexArray(0);
+
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 		
 		GL20.glUseProgram(0);
-		
 		GL11.glDepthMask(true);
 		GL11.glDisable(GL11.GL_BLEND);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 	}
-	/**
-	 * Renders a single block element
-	 * @param offset Position of block in world space coordinates
-	 * @param color Color of rendered block
-	 */
-	public void renderElementAtOffsetWithColor(Vector3f offset, Color color)
+
+	public void renderElement(Vector3f offset, Color color)
 	{		
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, quadIndicesVBO);
-		// global VP matrix for this rendering phase
-		
-		Vector3f colorVec = vectorForColor(color);
+
+		Vector3f colorVec = colorToVector(color);
 		GL20.glUniform4f(colorVectorLocation, colorVec.x, colorVec.y, colorVec.z, 1.0f);
 		GL20.glUniform1f(lightFactorLocation, 0.7f);
 		renderWallsAtOffset(offset);
 	}
 	
-	/**
-	 * Renders a single white line with a given alpha value
-	 * @param from Start point of line in world space coordinates
-	 * @param to End point of line in world space coordinates
-	 * @param alpha Alpha channel value for line
-	 */
 	public void renderLineWithAlpha(Vector3f from, Vector3f to, float alpha)
 	{
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, bbIndicesVBO);
@@ -185,31 +144,12 @@ public class GLRenderer {
 		matrix44Buffer = BufferUtils.createFloatBuffer(16);
 	}
 
-
 	private void setupOpenGL() {
-		// Setup an OpenGL context with API version 3.2
-		/* try {
-			PixelFormat pixelFormat = new PixelFormat();
-			ContextAttribs contextAtrributes = new ContextAttribs(3, 2).withProfileCore(true).withForwardCompatible(true);
-			
-			Display.setDisplayMode(new DisplayMode(width, height));
-			Display.create(pixelFormat, contextAtrributes);
-			Display.setVSyncEnabled(true);
-			Display.setFullscreen(true);
-			GL11.glViewport(0, 0, width, height);
-		} catch (LWJGLException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		} */
-		
-		// Setup an XNA like background color
 		GL11.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		GL11.glCullFace(GL11.GL_BACK);
 		GL11.glEnable(GL11.GL_CULL_FACE);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
-		// Map the internal OpenGL coordinate system to the entire screen
-		// GL11.glViewport(0, 0, width, height);
-		
+
 		this.exitOnGLError("setupOpenGL");
 	}
 	
@@ -218,7 +158,6 @@ public class GLRenderer {
 	}
 	
 	private void setupQuad() {
-
 		vertices = CubeMesh.VERTICES;
 		
 		verticesByteBuffer = BufferUtils.createByteBuffer(vertices.length * VertexData.stride);				
@@ -234,37 +173,19 @@ public class GLRenderer {
 		ByteBuffer indicesBuffer = BufferUtils.createByteBuffer(quadIndicesCount);
 		indicesBuffer.put(indices);
 		indicesBuffer.flip();
-		
-		// Create a new Vertex Array Object in memory and select it (bind)
-		// quadVAO = GL30.glGenVertexArrays();
-		// GL30.glBindVertexArray(quadVAO);
-		
-		// Create a new Vertex Buffer Object in memory and select it (bind)
+	
+		// Create a new VBO
 		quadVertexVBO = GL15.glGenBuffers();
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, quadVertexVBO);
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vertices.length * VertexData.stride, verticesFloatBuffer, GL15.GL_STREAM_DRAW);
 		
-		
-		/* GL20.glVertexAttribPointer(kPosAttrib, VertexData.positionElementCount, GL11.GL_FLOAT, 
-				false, VertexData.stride, VertexData.positionByteOffset);
-		GL20.glVertexAttribPointer(kNormAttrib, VertexData.normalElementCount, GL11.GL_FLOAT, 
-				false, VertexData.stride, VertexData.normalByteOffset);
-
-		
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0); */
-		
-		// Deselect (bind to 0) the VAO
-		// GL30.glBindVertexArray(0);
-		
-		// Create a new VBO for the indices and select it (bind) - INDICES
+		// Create a new IBO
 		quadIndicesVBO = GL15.glGenBuffers();
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, quadIndicesVBO);
 		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, quadIndicesCount, indicesBuffer, GL15.GL_STATIC_DRAW);
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
 
-		// bounding box
-		
-		
+		// Bounding box
 		byte[] lineIndices = {
 				64, 65,
 		};
@@ -282,13 +203,8 @@ public class GLRenderer {
 	}
 	
 	private void setupShaders() {		
-		// Load the vertex shader
-
-		quadVertexShader = this.loadShader("vertexShader.glsl", 
-				GL20.GL_VERTEX_SHADER);
-		// Load the fragment shader
-		quadFragmentShader = this.loadShader("fragmentShader.glsl", 
-				GL20.GL_FRAGMENT_SHADER);
+		quadVertexShader = this.loadShader("vertexShader.glsl", GL20.GL_VERTEX_SHADER);
+		quadFragmentShader = this.loadShader("fragmentShader.glsl", GL20.GL_FRAGMENT_SHADER);
 		
 		// Create a new shader program that links both shaders
 		quadProgram = GL20.glCreateProgram();
@@ -309,9 +225,6 @@ public class GLRenderer {
 		
 		this.exitOnGLError("setupShaders");
 	}
-	
-	
-	
 	
 	private void renderWallsAtOffset(Vector3f offset)
 	{
@@ -347,7 +260,7 @@ public class GLRenderer {
 		}	
 	}
 	
-	private Vector3f vectorForColor(Color color)
+	private Vector3f colorToVector(Color color)
 	{
 		switch (color) {
 		case Red:
@@ -363,48 +276,12 @@ public class GLRenderer {
 		return new Vector3f(0.0f, 0.0f, 0.0f);
 	}
 	
-	private void destroyOpenGL() {	
-		// Delete the shaders
-		/* GL20.glUseProgram(0);
-		GL20.glDetachShader(quadProgram, quadVertexShader);
-		GL20.glDetachShader(quadProgram, quadFragmentShader);
-		
-		GL20.glDeleteShader(quadVertexShader);
-		GL20.glDeleteShader(quadFragmentShader);
-		GL20.glDeleteProgram(quadProgram);
-		
-		// Select the VAO
-		GL30.glBindVertexArray(quadVAO);
-		
-		// Disable the VBO index from the VAO attributes list
-		GL20.glDisableVertexAttribArray(0);
-		GL20.glDisableVertexAttribArray(1);
-		
-		// Delete the vertex VBO
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-		GL15.glDeleteBuffers(quadVertexVBO);
-		
-		// Delete the index VBO
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-		GL15.glDeleteBuffers(quadIndicesVBO);
-		
-		// Delete the VAO
-		GL30.glBindVertexArray(0);
-		GL30.glDeleteVertexArrays(quadVAO);
-		
-		this.exitOnGLError("destroyOpenGL"); */
-	}
-	
-	// @SuppressWarnings("deprecation")
 	private int loadShader(String filename, int type) {
 		StringBuilder shaderSource = new StringBuilder();
 		int shaderID = 0;
 		
 		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader( 
-				/* this.getClass().getResourceAsStream(filename) */
-				context.getAssets().open(filename)
-			));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(context.getAssets().open(filename)));
 					 
 			String line;
 			while ((line = reader.readLine()) != null) {
@@ -412,7 +289,7 @@ public class GLRenderer {
 			}
 			reader.close();
 		} catch (IOException e) {
-			System.err.println("Could not read file.");
+			Log.e("loadShader", "Could not read file.");
 			e.printStackTrace();
 			System.exit(-1);
 		}
@@ -423,12 +300,11 @@ public class GLRenderer {
 		
 		if (GL20.glGetShader(shaderID, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
 			String err = GLES20.glGetShaderInfoLog(shaderID);
-			System.err.println("Could not compile shader: " + err);
+			Log.e("loadShader", "Could not compile shader: " + err);
 			System.exit(-1);
 		}
 		
 		this.exitOnGLError("loadShader");
-		
 		return shaderID;
 	}
 
@@ -436,10 +312,6 @@ public class GLRenderer {
 		int errorValue = GL11.glGetError();
 		
 		if (errorValue != GL11.GL_NO_ERROR) {
-			/* String errorString = GLU.gluErrorString(errorValue);
-			System.err.println("ERROR - " + errorMessage + ": " + errorString);
-			
-			if (Display.isCreated()) Display.destroy(); */
 			Log.e("exitOnGLError", "OpenGL error happend: " + errorValue);
 			System.exit(-1);
 		}

@@ -14,7 +14,7 @@ public class Game {
 	private Camera camera;
 	private GameLogic logic;
 	
-	private int highScore;
+	// private int highScore;
 	
 	private Context context;
 	public Game(Context context) {
@@ -53,81 +53,11 @@ public class Game {
 		renderer.endRendering();
 	}
 	
-	/**
-	 * Starts game
-	 */
-	/* public void startGame()
-	{
-		readHighScore();
-		
-		renderer = new GLRenderer(context);
-		logic = new GameLogic();
-		
-		Vector3f lookPoint = new Vector3f(GameLogic.WIDTH/2.0f, GameLogic.DEPTH/2.0f, GameLogic.HEIGHT/2.0f);
-		camera = new Camera((float)kWidth/(float)kHeight, lookPoint);
-		
-		renderer.setup(kWidth,kHeight);
-
-		while (!Display.isCloseRequested()) {
-
-			processKeyboardInput();
-			processMouseInput();
-			
-			logic.tick();
-			
-			renderer.startRenderingWithCamera(camera);
-			
-			renderBlock();
-			renderBoard();
-			renderBB();
-			
-			renderer.endRendering();
-
-			// Force a maximum FPS of about 60
-			Display.sync(60);
-			// Let the CPU synchronize with the GPU if GPU is tagging behind
-			Display.update();
-			Display.setTitle("Your score: " + logic.getScore() + " -- High score: " +  highScore);
-			
-			if (logic.isOver) {
-				if (logic.getScore() > highScore)
-				{
-					highScore = logic.getScore();
-					saveHighScore();
-					JOptionPane.showMessageDialog(null, "New highscore!","Game Over", JOptionPane.INFORMATION_MESSAGE);
-				} else {
-					JOptionPane.showMessageDialog(null, "Game Over.", "Game Over", JOptionPane.INFORMATION_MESSAGE);
-				}
-				logic.newGame();
-			}
-		}
-		
-		renderer.tearDown();
-	} */
-	
 	public void saveHighScore() {
-		/* PrintWriter out;
-		try {
-			out = new PrintWriter("highscore.txt");
-			out.print(highScore);		
-			out.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} */
 	}
 
 	public void readHighScore() {
-		this.highScore = 0;
-		
-		/* try {
-			File file =  new File("highscore.txt");
-			this.highScore = new Scanner(file).nextInt();
-		} catch (FileNotFoundException e) {
-			this.highScore = 0;
-		} catch (java.util.NoSuchElementException e) {
-			this.highScore = 0;
-		} */
+		//this.highScore = 0;
 	}
 
 	private void renderBlock()
@@ -146,7 +76,7 @@ public class Game {
 					element = block.elementAtLocation(i, j, k);
 					
 					if (element != null) {
-						renderer.renderElementAtOffsetWithColor(new Vector3f(bx + i, by + j, bz + k), element.getColor());
+						renderer.renderElement(new Vector3f(bx + i, by + j, bz + k), element.getColor());
 					}
 				}
 			}
@@ -166,7 +96,7 @@ public class Game {
 				for (int k = 0; k < bh; k++) {
 					element = board.elementAtLocation(i, j, k);
 					if (element != null) {
-						renderer.renderElementAtOffsetWithColor(new Vector3f(i, j, k), element.getColor());
+						renderer.renderElement(new Vector3f(i, j, k), element.getColor());
 					}
 				}
 			}
